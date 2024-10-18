@@ -1,0 +1,38 @@
+[
+  {
+    "file_name": "test3.json",
+    "file_path": "uploads/NewFolder/test3.json",
+    "file_size": 618,
+    "modified_time": "Thu, 17 Oct 2024 21:12:14 GMT",
+    "created_time": "Thu, 17 Oct 2024 21:12:14 GMT",
+    "file_mode": 436,
+    "is_directory": false
+  },
+  {
+    "file_name": "test.json",
+    "file_path": "uploads/NewFolder/test.json",
+    "file_size": 618,
+    "modified_time": "Thu, 17 Oct 2024 21:12:04 GMT",
+    "created_time": "Thu, 17 Oct 2024 21:12:04 GMT",
+    "file_mode": 436,
+    "is_directory": false
+  },
+  {
+    "file_name": "test1.json",
+    "file_path": "uploads/NewFolder/test1.json",
+    "file_size": 618,
+    "modified_time": "Thu, 17 Oct 2024 21:11:52 GMT",
+    "created_time": "Thu, 17 Oct 2024 21:11:52 GMT",
+    "file_mode": 436,
+    "is_directory": false
+  },
+  {
+    "file_name": "test2.json",
+    "file_path": "uploads/NewFolder/test2.json",
+    "file_size": 618,
+    "modified_time": "Thu, 17 Oct 2024 21:12:09 GMT",
+    "created_time": "Thu, 17 Oct 2024 21:12:09 GMT",
+    "file_mode": 436,
+    "is_directory": false
+  }
+]

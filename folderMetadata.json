@@ -1,0 +1,32 @@
+[
+  {
+    "folder_name": "database",
+    "folder_path": "uploads/database",
+    "folder_size": 0,
+    "files_count": 0,
+    "modified_time": "Fri, 18 Oct 2024 09:01:05 GMT",
+    "created_time": "Fri, 18 Oct 2024 09:02:48 GMT",
+    "fileMode": 2147484157,
+    "is_directory": true
+  },
+  {
+    "folder_name": "hello",
+    "folder_path": "uploads/hello",
+    "folder_size": 0,
+    "files_count": 0,
+    "modified_time": "Fri, 18 Oct 2024 08:59:32 GMT",
+    "created_time": "Fri, 18 Oct 2024 08:59:41 GMT",
+    "fileMode": 2147484157,
+    "is_directory": true
+  },
+  {
+    "folder_name": "component",
+    "folder_path": "uploads/component",
+    "folder_size": 0,
+    "files_count": 0,
+    "modified_time": "Fri, 18 Oct 2024 10:55:30 GMT",
+    "created_time": "Fri, 18 Oct 2024 10:56:26 GMT",
+    "fileMode": 2147484157,
+    "is_directory": true
+  }
+]
