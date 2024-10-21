@@ -10,9 +10,9 @@ func saveFolderMetadata(){
 	metadataLock.Lock()
 	defer metadataLock.Unlock()
 
-	var metadataList []FolderMetadata
+	var folderMetadataLust []FolderMetadata
 	folderMetadataMap.Range(func(key, value any) bool {
-		metadataList = append(metadataList, value.(FolderMetadata))
+		folderMetadataLust = append(folderMetadataLust, value.(FolderMetadata))
 		return true
 	})
 
@@ -22,7 +22,7 @@ func saveFolderMetadata(){
 		return
 	}
 	defer folder.Close()
-	err=json.NewEncoder(folder).Encode(metadataList)
+	err=json.NewEncoder(folder).Encode(folderMetadataLust)
 	if err!=nil{
 		log.Fatalln("Error in storing folder metadata",err)
 		return
