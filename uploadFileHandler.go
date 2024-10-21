@@ -70,20 +70,20 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	folderLock := getFileLock(folderPath)
 	folderLock.Lock()
 	defer folderLock.Unlock()
-
-	if folderInfo, err := os.Stat(folderPath); os.IsNotExist(err) {
+	
+	if _, err := os.Stat(folderPath); os.IsNotExist(err) {
 		os.MkdirAll(folderPath, os.ModePerm)
-		folderMetadata := FolderMetadata{}
-		folderMetadata.FolderName = folderInfo.Name()
-		folderMetadata.FolderPath = folderPath
-		folderMetadata.FolderSize = folderInfo.Size()
-		folderMetadata.FilesCount = 0
-		folderMetadata.ModifiedTime = folderInfo.ModTime().Format(http.TimeFormat)
-		folderMetadata.CreatedTime = time.Now().Format(http.TimeFormat)
-		folderMetadata.FolderMode = folderInfo.Mode()
-		folderMetadata.IsDirectory = folderInfo.IsDir()
-		folderMetadataMap.Store(folderPath, folderMetadata)
-		saveFolderMetadata()
+		// folderMetadata := FolderMetadata{}
+		// folderMetadata.FolderName = folderInfo.Name()
+		// folderMetadata.FolderPath = folderPath
+		// folderMetadata.FolderSize = folderInfo.Size()
+		// folderMetadata.FilesCount = 0
+		// folderMetadata.ModifiedTime = folderInfo.ModTime().Format(http.TimeFormat)
+		// folderMetadata.CreatedTime = time.Now().Format(http.TimeFormat)
+		// folderMetadata.FolderMode = folderInfo.Mode()
+		// folderMetadata.IsDirectory = folderInfo.IsDir()
+		// folderMetadataMap.Store(folderPath, folderMetadata)
+		//saveFolderMetadata()
 	}
 
 	filePath := filepath.Join(folderPath, fileName)
@@ -120,6 +120,7 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	metadata := FileMetadata{
 		FileName:     fileName,
 		FilePath:     filePath,
+		FolderPath:   folderPath,
 		FileSize:     fileInfo.Size(),
 		ModifiedTime: fileInfo.ModTime().Format(http.TimeFormat),
 		CreatedTime:  time.Now().Format(http.TimeFormat),
@@ -127,7 +128,7 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		IsDirectory:  fileInfo.IsDir(),
 	}
 	metaDataMap.Store(filePath, metadata)
-	saveFileMetadata()
+	saveFileMetadata(folderPath)
 
 	saveFolderMetadata()
 	response.StatusCode = http.StatusCreated

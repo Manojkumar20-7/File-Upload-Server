@@ -6,17 +6,20 @@ import (
 	"os"
 )
 
-func saveFileMetadata() {
+func saveFileMetadata(folderPath string) {
 	metadataLock.Lock()
 	defer metadataLock.Unlock()
 
 	var metadataList []FileMetadata
-	metaDataMap.Range(func(key, value any) bool {
-		metadataList = append(metadataList, value.(FileMetadata))
+	metaDataMap.Range(func(key , value any) bool {
+		if value.(FileMetadata).FolderPath==folderPath{
+			metadataList = append(metadataList, value.(FileMetadata))
+		}
 		return true
 	})
 
-	file, err := os.Create(fileMetadataFile)
+	metadataFile:= folderPath+".json"
+	file, err := os.Create(metadataFile)
 	if err != nil {
 		log.Fatalln("Error in opening metadata file while saving", err)
 		return

@@ -7,8 +7,9 @@ import (
 	"os"
 )
 
-func loadFileMetadata() {
-	file, err := os.Open(fileMetadataFile)
+func loadFileMetadata(folderPath string) {
+	metaDataFile:=folderPath+".json"
+	file, err := os.OpenFile(metaDataFile,os.O_RDWR|os.O_CREATE,os.ModePerm)
 	if err != nil {
 		log.Fatal("Error in opening metadata file")
 		return

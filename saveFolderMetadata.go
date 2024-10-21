@@ -10,19 +10,19 @@ func saveFolderMetadata(){
 	metadataLock.Lock()
 	defer metadataLock.Unlock()
 
-	var folderMetadataLust []FolderMetadata
+	var folderMetadataList []FolderMetadata
 	folderMetadataMap.Range(func(key, value any) bool {
-		folderMetadataLust = append(folderMetadataLust, value.(FolderMetadata))
+		folderMetadataList = append(folderMetadataList, value.(FolderMetadata))
 		return true
 	})
-
-	folder,err:=os.Create(folderMetadataFile)
+	metaDataFile:=uploadDir+".json"
+	folder,err:=os.Create(metaDataFile)
 	if err!=nil{
 		log.Fatal("Error in openning folder metadata file",err)
 		return
 	}
 	defer folder.Close()
-	err=json.NewEncoder(folder).Encode(folderMetadataLust)
+	err=json.NewEncoder(folder).Encode(folderMetadataList)
 	if err!=nil{
 		log.Fatalln("Error in storing folder metadata",err)
 		return

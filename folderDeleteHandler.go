@@ -20,6 +20,7 @@ func deleteFolderHandler(w http.ResponseWriter, r *http.Request) {
 		response.Message = "Folder deleted successfully"
 		response.ResponseTime = time.Now()
 		jsonResponse.Encode(response)
+		os.Remove(folderPath+".json")
 		return
 	} else {
 		os.RemoveAll(folderPath)
@@ -28,6 +29,7 @@ func deleteFolderHandler(w http.ResponseWriter, r *http.Request) {
 		response.Message = "Folder " + folder + " deleted"
 		response.ResponseTime = time.Now()
 		jsonResponse.Encode(response)
+		os.Remove(folderPath+".json")
 		return
 	}
 }

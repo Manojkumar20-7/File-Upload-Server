@@ -99,7 +99,7 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	metaDataMap.Delete(filePath)
-	saveFileMetadata()
+	saveFileMetadata(folderPath)
 
 	fmt.Fprintf(w, "File deleted successfully: %s\n", fileName)
 	response.StatusCode = http.StatusOK
@@ -132,6 +132,7 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(response)
 			return
 		}
+		os.Remove(folderPath+".json")
 		response.StatusCode = http.StatusOK
 		response.Status = "OK"
 		response.Message = "Folder deleted successfully"

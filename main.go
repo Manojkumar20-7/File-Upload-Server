@@ -35,6 +35,7 @@ type Response struct {
 type FileMetadata struct {
 	FileName     string      `json:"file_name"`
 	FilePath     string      `json:"file_path"`
+	FolderPath   string      `json:"folder_path"`
 	FileSize     int64       `json:"file_size"`
 	ModifiedTime string      `json:"modified_time"`
 	CreatedTime  string      `json:"created_time"`
@@ -62,8 +63,8 @@ type zipStatus struct {
 }
 
 func main() {
-	loadFileMetadata()
-	loadFolderMetadata()
+	go loadFileMetadataAtStart()
+	// loadFolderMetadata()
 	workerPool()
 	http.HandleFunc("/upload", uploadFileHandler)
 	http.HandleFunc("/download", downloadFileHandler)
