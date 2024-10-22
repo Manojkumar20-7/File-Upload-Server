@@ -70,22 +70,22 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	folderLock := getFileLock(folderPath)
 	folderLock.Lock()
 	defer folderLock.Unlock()
-	
-	if _, err := os.Stat(folderPath); os.IsNotExist(err) {
-		os.MkdirAll(folderPath, os.ModePerm)
-		// folderMetadata := FolderMetadata{}
-		// folderMetadata.FolderName = folderInfo.Name()
-		// folderMetadata.FolderPath = folderPath
-		// folderMetadata.FolderSize = folderInfo.Size()
-		// folderMetadata.FilesCount = 0
-		// folderMetadata.ModifiedTime = folderInfo.ModTime().Format(http.TimeFormat)
-		// folderMetadata.CreatedTime = time.Now().Format(http.TimeFormat)
-		// folderMetadata.FolderMode = folderInfo.Mode()
-		// folderMetadata.IsDirectory = folderInfo.IsDir()
-		// folderMetadataMap.Store(folderPath, folderMetadata)
-		//saveFolderMetadata()
-	}
 
+	_, er := os.Stat(folderPath)
+	if os.IsNotExist(er) {
+		os.MkdirAll(folderPath, os.ModePerm)
+	}
+	folderInfo, err := os.Stat(folderPath)
+	if err != nil {
+		http.Error(w, "Unable to stat folder", http.StatusInternalServerError)
+		response.StatusCode = http.StatusInternalServerError
+		response.Status = "Internal Server Error"
+		response.Message = "Unable to stat folder"
+		response.ResponseTime = time.Now()
+		jsonResponse.Encode(response)
+		return
+	}
+	
 	filePath := filepath.Join(folderPath, fileName)
 
 	fileLock := getFileLock(filePath)
@@ -103,7 +103,6 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-
 	_, err = io.Copy(file, f)
 	if err != nil {
 		http.Error(w, "Error in writing file", http.StatusInternalServerError)
@@ -129,7 +128,16 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	metaDataMap.Store(filePath, metadata)
 	saveFileMetadata(folderPath)
-
+	folderMetadata := FolderMetadata{FilesCount: 0}
+	folderMetadata.FolderName = folderInfo.Name()
+	folderMetadata.FolderPath = folderPath
+	folderMetadata.FolderSize = folderInfo.Size()
+	folderMetadata.FilesCount = folderMetadata.FilesCount+1
+	folderMetadata.ModifiedTime = folderInfo.ModTime().Format(http.TimeFormat)
+	folderMetadata.CreatedTime = time.Now().Format(http.TimeFormat)
+	folderMetadata.FolderMode = folderInfo.Mode()
+	folderMetadata.IsDirectory = folderInfo.IsDir()
+	folderMetadataMap.Store(folderPath, folderMetadata)
 	saveFolderMetadata()
 	response.StatusCode = http.StatusCreated
 	response.Status = "Created"

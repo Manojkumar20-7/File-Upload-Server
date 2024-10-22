@@ -8,15 +8,16 @@ import (
 )
 
 func loadFolderMetadata() {
-	file, err := os.Open(folderMetadataFile)
+	metadataFile:=uploadDir+".json"
+	folder, err := os.Open(metadataFile)
 	if err != nil {
 		log.Fatal("Error in opening metadata file")
 		return
 	}
-	defer file.Close()
+	defer folder.Close()
 
 	var metadataList []FolderMetadata
-	if err := json.NewDecoder(file).Decode(&metadataList); err != nil && err!=io.EOF {
+	if err := json.NewDecoder(folder).Decode(&metadataList); err != nil && err!=io.EOF {
 		log.Fatal("Failed to decode the metadata", err)
 	}
 

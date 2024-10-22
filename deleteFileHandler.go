@@ -100,7 +100,6 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 
 	metaDataMap.Delete(filePath)
 	saveFileMetadata(folderPath)
-
 	fmt.Fprintf(w, "File deleted successfully: %s\n", fileName)
 	response.StatusCode = http.StatusOK
 	response.Status = "OK"
@@ -132,11 +131,28 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(response)
 			return
 		}
-		os.Remove(folderPath+".json")
+		folderMetadataMap.Delete(folderPath)
+		saveFolderMetadata()
+		os.Remove(folderPath + ".json")
 		response.StatusCode = http.StatusOK
 		response.Status = "OK"
 		response.Message = "Folder deleted successfully"
 		response.ResponseTime = time.Now()
 		json.NewEncoder(w).Encode(response)
 	}
+	folderInfo, err := os.Stat(folderPath)
+	if err!=nil|| os.IsNotExist(err){
+		return
+	}
+	folderMetadata := &FolderMetadata{}
+	folderMetadata.FolderName = folderInfo.Name()
+	folderMetadata.FolderPath = folderPath
+	folderMetadata.FolderSize = folderInfo.Size()
+	folderMetadata.FilesCount = folderMetadata.FilesCount - 1
+	folderMetadata.ModifiedTime = folderInfo.ModTime().Format(http.TimeFormat)
+	folderMetadata.CreatedTime = time.Now().Format(http.TimeFormat)
+	folderMetadata.FolderMode = folderInfo.Mode()
+	folderMetadata.IsDirectory = folderInfo.IsDir()
+	folderMetadataMap.Store(folderPath, folderMetadata)
+	saveFolderMetadata()
 }

@@ -10,8 +10,8 @@ import (
 
 const (
 	uploadDir          = "./uploads"
-	fileMetadataFile   = "./fileMetadata.json"
-	folderMetadataFile = "./folderMetadata.json"
+	// fileMetadataFile   = "./fileMetadata.json"
+	// folderMetadataFile = "./folderMetadata.json"
 	workerCount        = 100
 )
 
@@ -64,7 +64,7 @@ type zipStatus struct {
 
 func main() {
 	go loadFileMetadataAtStart()
-	// loadFolderMetadata()
+	loadFolderMetadata()
 	workerPool()
 	http.HandleFunc("/upload", uploadFileHandler)
 	http.HandleFunc("/download", downloadFileHandler)
