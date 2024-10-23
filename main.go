@@ -70,10 +70,10 @@ func main() {
 		log.Fatalln(err)
 		return
 	}
-	logger:=slog.New(slog.NewJSONHandler(io.MultiWriter(logfile,os.Stdout),nil))
+	logger:=slog.New(slog.NewTextHandler(io.MultiWriter(logfile,os.Stdout),nil))
 	logger.Info("Server starts...")
-	loadFileMetadataAtStart()
-	loadFolderMetadata()
+	go loadFileMetadataAtStart()
+	go loadFolderMetadata()
 	workerPool()
 	http.HandleFunc("/upload", uploadFileHandler)
 	http.HandleFunc("/download", downloadFileHandler)

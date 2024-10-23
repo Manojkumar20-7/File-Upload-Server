@@ -35,10 +35,9 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 
 	folderPath := filepath.Join(uploadDir, folder)
 	if _, err := os.Stat(folderPath); os.IsNotExist(err) {
-		http.Error(w, "Folder Not Found", http.StatusNotFound)
-		response.StatusCode = http.StatusNotFound
-		response.Status = "Not Found"
-		response.Message = "Folder Not Found"
+		response.StatusCode = http.StatusOK
+		response.Status = "OK"
+		response.Message = "File deleted successfully"
 		response.ResponseTime = time.Now()
 		json.NewEncoder(w).Encode(response)
 		return
@@ -143,14 +142,14 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 	}
 	folderInfo, err := os.Stat(folderPath)
-	if err!=nil|| os.IsNotExist(err){
+	if err != nil || os.IsNotExist(err) {
 		return
 	}
 	folderMetadata := FolderMetadata{}
 	folderMetadata.FolderName = folderInfo.Name()
 	folderMetadata.FolderPath = folderPath
 	folderMetadata.FolderSize = folderInfo.Size()
-	fcount,_:=getFilesCount(folderPath)
+	fcount, _ := getFilesCount(folderPath)
 	folderMetadata.FilesCount = fcount
 	folderMetadata.ModifiedTime = folderInfo.ModTime().Format(http.TimeFormat)
 	folderMetadata.CreatedTime = time.Now().Format(http.TimeFormat)

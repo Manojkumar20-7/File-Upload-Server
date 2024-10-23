@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -24,7 +23,6 @@ func loadFileMetadata(folderPath string) {
 	
 	for _, metadata := range metadataList {
 		metaDataMap.Store(metadata.FilePath, metadata)
-		fmt.Println(metadata)//
 		log.Println("Loaded: ", metadata.FilePath)
 	}
 

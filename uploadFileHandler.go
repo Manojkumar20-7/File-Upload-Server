@@ -3,11 +3,39 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 )
+
+func getCurrentTime(folderPath string) string {
+	//var metadata FolderMetadata
+	var result string
+	folderMetadataMap.Range(func(key, value any) bool {
+		if folderPath == key && value.(FolderMetadata).CreatedTime != "" {
+			result = value.(FolderMetadata).CreatedTime
+		}
+		return true
+	})
+	return result
+}
+
+func getFilesCount(folderPath string) (int, error) {
+	fcount := 0
+	_ = filepath.WalkDir(folderPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		fcount++
+		return nil
+	})
+	return fcount, nil
+}
 
 func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	response := Response{}
@@ -73,19 +101,9 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 
 	_, er := os.Stat(folderPath)
 	if os.IsNotExist(er) {
-		os.MkdirAll(folderPath, os.ModePerm)
+		os.MkdirAll(folderPath,os.ModePerm)
 	}
-	folderInfo, err := os.Stat(folderPath)
-	if err != nil {
-		http.Error(w, "Unable to stat folder", http.StatusInternalServerError)
-		response.StatusCode = http.StatusInternalServerError
-		response.Status = "Internal Server Error"
-		response.Message = "Unable to stat folder"
-		response.ResponseTime = time.Now()
-		jsonResponse.Encode(response)
-		return
-	}
-	
+
 	filePath := filepath.Join(folderPath, fileName)
 
 	fileLock := getFileLock(filePath)
@@ -128,14 +146,30 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	metaDataMap.Store(filePath, metadata)
 	saveFileMetadata(folderPath)
-	folderMetadata := FolderMetadata{FilesCount: 0}
+	folderInfo, err := os.Stat(folderPath)
+	if err != nil {
+		http.Error(w, "Unable to stat folder", http.StatusInternalServerError)
+		response.StatusCode = http.StatusInternalServerError
+		response.Status = "Internal Server Error"
+		response.Message = "Unable to stat folder"
+		response.ResponseTime = time.Now()
+		jsonResponse.Encode(response)
+		return
+	}
+	folderMetadata := FolderMetadata{}
 	folderMetadata.FolderName = folderInfo.Name()
 	folderMetadata.FolderPath = folderPath
 	folderMetadata.FolderSize = folderInfo.Size()
-	folderMetadata.FilesCount = folderMetadata.FilesCount+1
+	fcount, _ := getFilesCount(folderPath)
+	folderMetadata.FilesCount = fcount
 	folderMetadata.ModifiedTime = folderInfo.ModTime().Format(http.TimeFormat)
-	folderMetadata.CreatedTime = time.Now().Format(http.TimeFormat)
-	folderMetadata.FolderMode = folderInfo.Mode()
+	curTime := getCurrentTime(folderPath)
+	if curTime == "" {
+		folderMetadata.CreatedTime = time.Now().Format(http.TimeFormat)
+	} else {
+		folderMetadata.CreatedTime = curTime
+	}
+	folderMetadata.FolderMode =folderInfo.Mode().Perm()
 	folderMetadata.IsDirectory = folderInfo.IsDir()
 	folderMetadataMap.Store(folderPath, folderMetadata)
 	saveFolderMetadata()
