@@ -2,16 +2,18 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
+	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 )
 
 const (
 	uploadDir          = "./uploads"
-	// fileMetadataFile   = "./fileMetadata.json"
-	// folderMetadataFile = "./folderMetadata.json"
 	workerCount        = 100
 )
 
@@ -50,7 +52,7 @@ type FolderMetadata struct {
 	FilesCount   int         `json:"files_count"`
 	ModifiedTime string      `json:"modified_time"`
 	CreatedTime  string      `json:"created_time"`
-	FolderMode   fs.FileMode `json:"fileMode"`
+	FolderMode   os.FileMode `json:"fileMode"`
 	IsDirectory  bool        `json:"is_directory"`
 }
 
@@ -63,7 +65,14 @@ type zipStatus struct {
 }
 
 func main() {
-	go loadFileMetadataAtStart()
+	logfile,err:=os.OpenFile("logFile.log",os.O_APPEND|os.O_CREATE|os.O_WRONLY,os.ModePerm)
+	if os.IsNotExist(err){
+		log.Fatalln(err)
+		return
+	}
+	logger:=slog.New(slog.NewJSONHandler(io.MultiWriter(logfile,os.Stdout),nil))
+	logger.Info("Server starts...")
+	loadFileMetadataAtStart()
 	loadFolderMetadata()
 	workerPool()
 	http.HandleFunc("/upload", uploadFileHandler)

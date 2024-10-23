@@ -44,7 +44,7 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !r.URL.Query().Has("filename") {
-		folder, err := os.Stat(folderPath)
+		_, err := os.Stat(folderPath)
 		if err != nil {
 			response.StatusCode = http.StatusBadRequest
 			response.Status = "Bad Request"
@@ -52,9 +52,9 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 			response.ResponseTime = time.Now()
 			json.NewEncoder(w).Encode(response)
 			return
-		}
-		if folder.Size() == 0 {
-			err := os.Remove(folderPath)
+		} else {
+			err := os.RemoveAll(folderPath)
+			os.Remove(folderPath + ".json")
 			if err != nil {
 				log.Fatal("Error in deleting folder")
 				response.StatusCode = http.StatusBadRequest
@@ -64,6 +64,8 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 				json.NewEncoder(w).Encode(response)
 				return
 			}
+			folderMetadataMap.Delete(folderPath)
+			saveFolderMetadata()
 			fmt.Fprintf(w, "Folder deleted successfully: %s\n", folderPath)
 			response.StatusCode = http.StatusOK
 			response.Status = "OK"
@@ -144,11 +146,12 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 	if err!=nil|| os.IsNotExist(err){
 		return
 	}
-	folderMetadata := &FolderMetadata{}
+	folderMetadata := FolderMetadata{}
 	folderMetadata.FolderName = folderInfo.Name()
 	folderMetadata.FolderPath = folderPath
 	folderMetadata.FolderSize = folderInfo.Size()
-	folderMetadata.FilesCount = folderMetadata.FilesCount - 1
+	fcount,_:=getFilesCount(folderPath)
+	folderMetadata.FilesCount = fcount
 	folderMetadata.ModifiedTime = folderInfo.ModTime().Format(http.TimeFormat)
 	folderMetadata.CreatedTime = time.Now().Format(http.TimeFormat)
 	folderMetadata.FolderMode = folderInfo.Mode()
