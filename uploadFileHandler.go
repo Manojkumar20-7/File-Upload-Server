@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func getCurrentTime(folderPath string) string {
@@ -38,6 +40,10 @@ func getFilesCount(folderPath string) (int, error) {
 }
 
 func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
+	logField := log.Fields{
+		"method": "uploadFileHandler",
+	}
+	logger.Log(log.InfoLevel, logField, "Upload handler begins")
 	response := Response{}
 	jsonResponse := json.NewEncoder(w)
 	if r.Method != http.MethodPost {
@@ -49,7 +55,7 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		jsonResponse.Encode(response)
 		return
 	}
-
+	logger.Log(log.DebugLevel, logField, "Reading request body at upload handler")
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
 		http.Error(w, "Input not specified", http.StatusBadRequest)
@@ -95,23 +101,26 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	folderPath := filepath.Join(uploadDir, folder)
 
+	logger.Log(log.DebugLevel, logField, "Acquiring folder lock at upload handler")
 	folderLock := getFileLock(folderPath)
 	folderLock.Lock()
 	defer folderLock.Unlock()
 
 	_, er := os.Stat(folderPath)
 	if os.IsNotExist(er) {
-		os.MkdirAll(folderPath,os.ModePerm)
+		logger.Log(log.TraceLevel, logField, "Creating folder")
+		os.MkdirAll(folderPath, os.ModePerm)
 	}
 
 	filePath := filepath.Join(folderPath, fileName)
-
+	logger.Log(log.DebugLevel, logField, "Acquiring file lock at upload handler")
 	fileLock := getFileLock(filePath)
 	fileLock.Lock()
 	defer fileLock.Unlock()
 
 	file, err := os.Create(filePath)
 	if err != nil {
+		logger.Log(log.ErrorLevel, logField, "Error in creating file")
 		http.Error(w, "Unable to create file", http.StatusInternalServerError)
 		response.StatusCode = http.StatusInternalServerError
 		response.Status = "Internal Server Error"
@@ -123,6 +132,7 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 	_, err = io.Copy(file, f)
 	if err != nil {
+		logger.Log(log.ErrorLevel, logField, "Error in copying file content")
 		http.Error(w, "Error in writing file", http.StatusInternalServerError)
 		response.StatusCode = http.StatusInternalServerError
 		response.Status = "Internal Server Error"
@@ -144,6 +154,7 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		FileMode:     fileInfo.Mode(),
 		IsDirectory:  fileInfo.IsDir(),
 	}
+	logger.Log(log.DebugLevel, logField, "Storing file metadata in memory")
 	metaDataMap.Store(filePath, metadata)
 	saveFileMetadata(folderPath)
 	folderInfo, err := os.Stat(folderPath)
@@ -169,7 +180,7 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		folderMetadata.CreatedTime = curTime
 	}
-	folderMetadata.FolderMode =folderInfo.Mode().Perm()
+	folderMetadata.FolderMode = folderInfo.Mode().Perm()
 	folderMetadata.IsDirectory = folderInfo.IsDir()
 	folderMetadataMap.Store(folderPath, folderMetadata)
 	saveFolderMetadata()
@@ -178,4 +189,5 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 	response.Message = "File uploaded successfully"
 	response.ResponseTime = time.Now()
 	jsonResponse.Encode(response)
+	logger.Log(log.InfoLevel, logField, "Completing file uploads and exits")
 }

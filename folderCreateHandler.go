@@ -6,9 +6,15 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func folderCreateHandler(w http.ResponseWriter, r *http.Request) {
+	logField := log.Fields{
+		"method": "folderCreateHandler",
+	}
+	logger.Log(log.InfoLevel, logField, "Folder create handler begin")
 	response := Response{}
 	jsonResponse := json.NewEncoder(w)
 	folder := r.URL.Query().Get("folder")
@@ -22,8 +28,9 @@ func folderCreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	folderPath := filepath.Join(uploadDir, folder)
-	folderInfo, err := os.Stat(folderPath)
-	if err != nil {
+	_, err := os.Stat(folderPath)
+	if os.IsNotExist(err) {
+		logger.Log(log.TraceLevel, logField, "Creating folder")
 		os.MkdirAll(folderPath, os.ModePerm)
 		response.StatusCode = http.StatusCreated
 		response.Status = "Created"
@@ -31,12 +38,15 @@ func folderCreateHandler(w http.ResponseWriter, r *http.Request) {
 		response.ResponseTime = time.Now()
 		jsonResponse.Encode(response)
 	} else {
+		logger.Log(log.ErrorLevel, logField, "Error in creating folder")
 		response.StatusCode = http.StatusCreated
 		response.Status = "Created"
 		response.Message = "Folder created successfully"
 		response.ResponseTime = time.Now()
 		jsonResponse.Encode(response)
 	}
+	logger.Log(log.DebugLevel, logField, "Updating folder metadata")
+	folderInfo, _ := os.Stat(folderPath)
 	folderMetadata := FolderMetadata{}
 	folderMetadata.FolderName = folderInfo.Name()
 	folderMetadata.FolderPath = folderPath
@@ -48,4 +58,5 @@ func folderCreateHandler(w http.ResponseWriter, r *http.Request) {
 	folderMetadata.IsDirectory = folderInfo.IsDir()
 	folderMetadataMap.Store(folderPath, folderMetadata)
 	saveFolderMetadata()
+	logger.Log(log.InfoLevel, logField, "Completing folder create and exits")
 }

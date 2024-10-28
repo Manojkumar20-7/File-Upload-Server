@@ -7,12 +7,17 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func downloadFileHandler(w http.ResponseWriter, r *http.Request) {
+	logField := log.Fields{
+		"method": "downloadFileHandler",
+	}
+	logger.Log(log.InfoLevel, logField, "Download handler begins")
 	response := Response{}
 	jsonResponse := json.NewEncoder(w)
-
 	if r.Method != http.MethodGet {
 		http.Error(w, "Invalid HTTP request", http.StatusBadRequest)
 		response.StatusCode = http.StatusBadRequest
@@ -46,11 +51,11 @@ func downloadFileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	filePath := filepath.Join(uploadDir, folder, fileName)
-
+	logger.Log(log.DebugLevel, logField, "Acquiring file lock")
 	fileLock := getFileLock(filePath)
 	fileLock.Lock()
 	defer fileLock.Unlock()
-
+	logger.Log(log.DebugLevel, logField, "Reading file for download")
 	fileContent, err := os.ReadFile(filePath)
 	if err != nil {
 		http.Error(w, "File not Found", http.StatusNotFound)
@@ -69,4 +74,5 @@ func downloadFileHandler(w http.ResponseWriter, r *http.Request) {
 	response.ResponseTime = time.Now()
 	jsonResponse.Encode(response)
 	w.Write(fileContent)
+	logger.Log(log.InfoLevel, logField, "Completing file download and exits")
 }

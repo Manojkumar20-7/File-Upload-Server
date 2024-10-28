@@ -2,11 +2,16 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 )
 
-func saveFolderMetadata(){
+func saveFolderMetadata() {
+	logField := log.Fields{
+		"method": "saveFolderMetadata",
+	}
+	logger.Log(log.InfoLevel, logField, "Save folder metadata begins")
 	metadataLock.Lock()
 	defer metadataLock.Unlock()
 
@@ -15,17 +20,19 @@ func saveFolderMetadata(){
 		folderMetadataList = append(folderMetadataList, value.(FolderMetadata))
 		return true
 	})
-	metaDataFile:=uploadDir+".json"
-	folder,err:=os.Create(metaDataFile)
-	if err!=nil{
-		log.Fatal("Error in openning folder metadata file",err)
+	metaDataFile := uploadDir + ".json"
+	folder, err := os.Create(metaDataFile)
+	if err != nil {
+		logger.Log(log.ErrorLevel, logField, "Error in openning folder metadata file")
+		log.Fatal("Error in openning folder metadata file", err)
 		return
 	}
 	defer folder.Close()
-	err=json.NewEncoder(folder).Encode(folderMetadataList)
-	if err!=nil{
-		log.Fatalln("Error in storing folder metadata",err)
+	err = json.NewEncoder(folder).Encode(folderMetadataList)
+	if err != nil {
+		logger.Log(log.FatalLevel, logField, "Error in saving metadata into file")
 		return
 	}
-	log.Println("Folder Metadata saved successfully")
+	logger.Log(log.TraceLevel, logField, "Folder Metadata saved successfully")
+	logger.Log(log.InfoLevel, logField, "Exits folder metadata")
 }

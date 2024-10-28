@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type FolderDetails struct {
@@ -26,33 +27,59 @@ func printStat(file fs.FileInfo, w http.ResponseWriter) {
 }
 
 func folderInfoHandler(w http.ResponseWriter, r *http.Request) {
+	response := Response{}
+	jsonResponse := json.NewEncoder(w)
+	logField := log.Fields{
+		"method": "folderInfoHandler",
+	}
+	logger.Log(log.InfoLevel, logField, "Folder info handler begins")
 	if r.Method != http.MethodGet {
 		http.Error(w, "Invalid HTTP request", http.StatusBadRequest)
+		response.StatusCode = http.StatusBadRequest
+		response.Status = "Bad Request"
+		response.Message = "Invalid HTTP request"
+		response.ResponseTime = time.Now()
+		jsonResponse.Encode(response)
 		return
 	}
 
 	folder := r.URL.Query().Get("folder")
 	if folder == "" {
 		http.Error(w, "Folder not specified", http.StatusBadRequest)
+		response.StatusCode = http.StatusBadRequest
+		response.Status = "Bad Request"
+		response.Message = "Folder not specified"
+		response.ResponseTime = time.Now()
+		jsonResponse.Encode(response)
 		return
 	}
 	folderPath := filepath.Join(uploadDir, folder)
 	folderInfo, err := os.Stat(folderPath)
 	if os.IsNotExist(err) {
-		log.Fatal(err)
+		http.Error(w, "Folder not found", http.StatusNotFound)
+		response.StatusCode = http.StatusNotFound
+		response.Status = "Not Found"
+		response.Message = "Folder not found"
+		response.ResponseTime = time.Now()
+		jsonResponse.Encode(response)
 		return
 	}
 	content, err := os.ReadDir(folderPath)
 	if err != nil {
-		log.Fatal(err)
+		http.Error(w, "Error in reading fodler info", http.StatusNotFound)
+		response.StatusCode = http.StatusNotFound
+		response.Status = "Not Found"
+		response.Message = "File not found"
+		response.ResponseTime = time.Now()
+		jsonResponse.Encode(response)
 		return
 	}
 	var result any
 	metaDataMap.Range(func(key, value any) bool {
-		if key == folderPath{
-			result=value
+		if key == folderPath {
+			result = value
 		}
-		return true;
+		return true
 	})
 	fmt.Fprintf(w, "Name: %s\n", folderInfo.Name())
 	fmt.Fprintf(w, "Size: %d\n", folderInfo.Size())
@@ -70,7 +97,6 @@ func folderInfoHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%-30v", "Size")
 	fmt.Fprintf(w, "%-30v\n", "Modified-time")
 	for _, f := range content {
-		//fmt.Fprintf(w,"%s\n",f.Name())
 		filePath := filepath.Join(folderPath, f.Name())
 		fileInfo, err := os.Stat(filePath)
 		if err != nil {
@@ -80,4 +106,5 @@ func folderInfoHandler(w http.ResponseWriter, r *http.Request) {
 		printStat(fileInfo, w)
 	}
 	json.NewEncoder(w).Encode(result)
+	logger.Log(log.InfoLevel, logField, "Folder info handler exits")
 }

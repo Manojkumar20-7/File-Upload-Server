@@ -3,17 +3,21 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
-
 func fileInfoHandler(w http.ResponseWriter, r *http.Request) {
+	logField:=log.Fields{
+		"method":"fileInfoHandler",
+	}
+	logger.Log(log.InfoLevel,logField,"FileInfo handler begins")
 	response := Response{}
-	jsonResponse:=json.NewEncoder(w)
+	jsonResponse := json.NewEncoder(w)
 	if r.Method != http.MethodGet {
 		http.Error(w, "Invalid HTTP request", http.StatusBadRequest)
 		response.StatusCode = http.StatusBadRequest
@@ -48,7 +52,6 @@ func fileInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	filePath := filepath.Join(uploadDir, folder, fileName)
-
 	fileInfo, err := os.Stat(filePath)
 	if os.IsNotExist(err) {
 		http.Error(w, "File not found", http.StatusNotFound)
@@ -61,15 +64,15 @@ func fileInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var result any
 	metaDataMap.Range(func(key, value any) bool {
-		if key == filePath{
-			result=value
+		if key == filePath {
+			result = value
 		}
-		return true;
+		return true
 	})
-	if err!=nil{
+	if err != nil {
 		log.Fatal(err)
 		return
-	}	
+	}
 	response.StatusCode = http.StatusOK
 	response.Status = "OK"
 	response.Message = "File info retrieved successfully"
@@ -78,4 +81,5 @@ func fileInfoHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", fileInfo.Size()))
 	w.Header().Set("Last-Modified", fileInfo.ModTime().Format(http.TimeFormat))
+	logger.Log(log.InfoLevel,logField,"Completing fileinfo handler and exits")
 }

@@ -2,20 +2,25 @@ package main
 
 import (
 	"archive/zip"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
-func Shutdown(){
+func Shutdown() {
 	close(taskQueue)
 	wg.Wait()
 	log.Println("All task completed, shutting down...")
 }
 
-func zipFolderInBackground(folder string)  {
+func zipFolderInBackground(folder string) {
+	logField := log.Fields{
+		"method": "zipFolderInBackground",
+	}
+	logger.Log(log.InfoLevel, logField, "Background zip begins")
 	status := &zipStatus{
 		Status:    "in_progress",
 		StartTime: time.Now(),
@@ -27,6 +32,7 @@ func zipFolderInBackground(folder string)  {
 
 	zipFile, err := os.Create(zipPath)
 	if err != nil {
+		logger.Log(log.ErrorLevel, logField, "Unable to create zip file")
 		status.Status = "failed"
 		status.ErrorMsg = "Unable to create zip file"
 		zipStatuses.Store(folder, status)
@@ -38,6 +44,7 @@ func zipFolderInBackground(folder string)  {
 	defer zipWriter.Close()
 
 	folderPath := filepath.Join(uploadDir, folder)
+	logger.Log(log.TraceLevel, logField, "Copying content for zipping")
 	err = filepath.Walk(folderPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -68,12 +75,15 @@ func zipFolderInBackground(folder string)  {
 	})
 
 	if err != nil {
+		logger.Log(log.ErrorLevel, logField, "Error in zipping")
 		status.Status = "failed"
 		status.ErrorMsg = "Error zipping folder"
 	} else {
+		logger.Log(log.DebugLevel, logField, "Zipping completed")
 		status.Status = "completed"
 		status.FilePath = zipPath
 	}
 	status.EndTime = time.Now()
 	zipStatuses.Store(folder, status)
+	logger.Log(log.InfoLevel, logField, "Exits Zip in background method")
 }

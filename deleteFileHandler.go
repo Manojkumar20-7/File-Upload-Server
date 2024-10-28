@@ -3,14 +3,19 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
+	logField := log.Fields{
+		"method": "deleteFileHandler",
+	}
+	logger.Log(log.InfoLevel, logField, "Delete file handler begins")
 	response := Response{}
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Invalid HTTP request", http.StatusBadRequest)
@@ -43,6 +48,7 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !r.URL.Query().Has("filename") {
+		logger.Log(log.TraceLevel, logField, "Filename not specified and Checking folder stats")
 		_, err := os.Stat(folderPath)
 		if err != nil {
 			response.StatusCode = http.StatusBadRequest
@@ -52,6 +58,7 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(response)
 			return
 		} else {
+			logger.Log(log.TraceLevel, logField, "Removing folder due to file name not specified")
 			err := os.RemoveAll(folderPath)
 			os.Remove(folderPath + ".json")
 			if err != nil {
@@ -63,6 +70,7 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 				json.NewEncoder(w).Encode(response)
 				return
 			}
+			logger.Log(log.DebugLevel, logField, "Removing folder metadata from map")
 			folderMetadataMap.Delete(folderPath)
 			saveFolderMetadata()
 			fmt.Fprintf(w, "Folder deleted successfully: %s\n", folderPath)
@@ -75,7 +83,7 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	fileName := r.URL.Query().Get("filename")
 	filePath := filepath.Join(folderPath, fileName)
-
+	logger.Log(log.TraceLevel, logField, "File name given and checking file stats")
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		response.StatusCode = http.StatusOK
 		response.Status = "OK"
@@ -84,10 +92,11 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
+	logger.Log(log.DebugLevel, logField, "Acquiring file lock")
 	fileLock := getFileLock(filePath)
 	fileLock.Lock()
 	defer fileLock.Unlock()
-
+	logger.Log(log.TraceLevel, logField, "Removing file from folder")
 	err := os.Remove(filePath)
 
 	if err != nil {
@@ -98,7 +107,6 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
-
 	metaDataMap.Delete(filePath)
 	saveFileMetadata(folderPath)
 	fmt.Fprintf(w, "File deleted successfully: %s\n", fileName)
@@ -121,7 +129,7 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 		folderLock := getFileLock(folderPath)
 		folderLock.Lock()
 		defer folderLock.Unlock()
-
+		logger.Log(log.DebugLevel, logField, "Removing folder due to empty")
 		err := os.Remove(folderPath)
 		if err != nil {
 			http.Error(w, "Error in deleting folder", http.StatusInternalServerError)
@@ -132,6 +140,7 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(response)
 			return
 		}
+		logger.Log(log.InfoLevel, logField, "Removing folder metadata due to removing last file in folder")
 		folderMetadataMap.Delete(folderPath)
 		saveFolderMetadata()
 		os.Remove(folderPath + ".json")
@@ -157,4 +166,5 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 	folderMetadata.IsDirectory = folderInfo.IsDir()
 	folderMetadataMap.Store(folderPath, folderMetadata)
 	saveFolderMetadata()
+	logger.Log(log.InfoLevel, logField, "Delete file handler completed and exits")
 }

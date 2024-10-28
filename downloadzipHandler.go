@@ -2,18 +2,24 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func downloadZipHandler(w http.ResponseWriter, r *http.Request) {
+	logField := log.Fields{
+		"method": "downloadZipHandler",
+	}
+	logger.Log(log.InfoLevel, logField, "Download zip handler begins")
 	response := Response{}
 	jsonResponse := json.NewEncoder(w)
 	folder := r.URL.Query().Get("folder")
 	if folder == "" {
+		logger.Log(log.InfoLevel, logField, "Folder not specified")
 		http.Error(w, "Folder not specified", http.StatusBadRequest)
 		response.StatusCode = http.StatusBadRequest
 		response.Status = "Bad Request"
@@ -25,6 +31,7 @@ func downloadZipHandler(w http.ResponseWriter, r *http.Request) {
 
 	zipPath := filepath.Join(uploadDir, folder)
 	zipName := zipPath + ".zip"
+	logger.Log(log.DebugLevel, logField, "Checking zip details")
 	_, err := os.Stat(zipName)
 	if err == nil {
 		response.StatusCode = http.StatusOK
@@ -35,8 +42,8 @@ func downloadZipHandler(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, zipName)
 		return
 	}
-	
-	
+
+	logger.Log(log.DebugLevel, logField, "Loading zip status from map")
 	status, ok := zipStatuses.Load(folder)
 	if !ok {
 		http.Error(w, "No zipping found for the specified folder", http.StatusNotFound)
@@ -64,4 +71,5 @@ func downloadZipHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(response)
 		jsonResponse.Encode(response)
 	}
+	logger.Log(log.InfoLevel, logField, "Exits Zip  download handler")
 }

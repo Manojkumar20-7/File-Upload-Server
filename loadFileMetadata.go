@@ -2,29 +2,35 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
-	"log"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func loadFileMetadata(folderPath string) {
-	metaDataFile:=folderPath+".json"
-	file, err := os.OpenFile(metaDataFile,os.O_RDWR|os.O_CREATE,os.ModePerm)
+	logField:=log.Fields{
+		"method":"loadFileMetadata",
+	}
+	logger.Log(log.TraceLevel,logField,"Load file metadata started")
+	metadataFile := folderPath + ".json"
+	file, err := os.OpenFile(metadataFile, os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
-		log.Fatal("Error in opening metadata file")
+		logger.Log(log.FatalLevel,logField,"Error in opening metadata file")
 		return
 	}
 	defer file.Close()
-	
+
 	var metadataList []FileMetadata
-	if err := json.NewDecoder(file).Decode(&metadataList); err != nil && err!=io.EOF{
-		log.Fatal("Failed to decode the metadata", err)
-	}
-	
-	for _, metadata := range metadataList {
-		metaDataMap.Store(metadata.FilePath, metadata)
-		log.Println("Loaded: ", metadata.FilePath)
+	if err := json.NewDecoder(file).Decode(&metadataList); err != nil && err != io.EOF {
+		logger.Log(log.FatalLevel,logField,"Failed to decode the metadata")
 	}
 
-	log.Println("Metadata loaded successfully in memory")
+	for _, metadata := range metadataList {
+		metaDataMap.Store(metadata.FilePath, metadata)
+		logger.Log(log.TraceLevel,logField,fmt.Sprintf("Loaded file: %s", metadata.FilePath))
+	}
+
+	logger.Log(log.TraceLevel,logField,"Metadata loaded successfully in memory")
 }
