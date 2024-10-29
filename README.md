@@ -13,6 +13,25 @@ This project implements a file server using Golang that supports the following o
 - Fetch zipping status
 - Download zipped folders
 
+## Installation and setup
+### Prerequisites
+- [Go 1.18+](https://go.dev/dl/) installed
+- Any HTTP client (eg., curl, Postman)
+### Clone the repository
+```bash
+git clone https://github.com/Manojkumar20-7/File-Upload-Server.git
+cd File-Upload-Server
+```
+### Install dependencies
+```bash
+go mod tidy
+```
+### Run the server
+```bash
+go run *.go
+```
+
+
 ## Endpoints
 
 ### 1. File Upload
@@ -66,21 +85,4 @@ curl 'http://localhost:8080/zipstatus?folder=FolderName'
 Download the zipped folder by specifying the folder which is zipped
 ```bash
 curl 'http://localhost:8080/zipdownload?folder=FolderName'
-```
-
-## Installation and setup
-### Prerequisites
-Go 1.18+ installed
-### Clone the repository
-```bash
-git clone https://github.com/Manojkumar20-7/File-Upload-Server.git
-cd File-Upload-Server
-```
-### Install dependencies
-```bash
-go mod tidy
-```
-### Run the server
-```bash
-go run *.go
 ```
