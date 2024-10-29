@@ -10,13 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type FolderDetails struct {
-	FileCount    int       `json:"file_count"`
-	FolderSize   int       `json:"folder_size"`
-	CreatedTime  time.Time `json:"created_time"`
-	ModifiedTime time.Time `json:"modified_time"`
-}
-
 func folderInfoHandler(w http.ResponseWriter, r *http.Request) {
 	logField := log.Fields{
 		"method": "folderInfoHandler",
