@@ -10,12 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func Shutdown() {
-	close(taskQueue)
-	wg.Wait()
-	log.Println("All task completed, shutting down...")
-}
-
 func zipFolderInBackground(folder string) {
 	logField := log.Fields{
 		"method": "zipFolderInBackground",

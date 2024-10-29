@@ -13,7 +13,6 @@ import (
 )
 
 func getCurrentTime(folderPath string) string {
-	//var metadata FolderMetadata
 	var result string
 	folderMetadataMap.Range(func(key, value any) bool {
 		if folderPath == key && value.(FolderMetadata).CreatedTime != "" {

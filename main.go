@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"runtime"
 	"sync"
+	"syscall"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -91,8 +95,8 @@ func init() {
 	if os.IsNotExist(err) {
 		os.Mkdir(uploadDir, os.ModePerm)
 	}
-	
-	logger = NewBufferedLogger(filepath.Join(logDir,logFile), 1, 3, 1,time.Millisecond)
+
+	logger = NewBufferedLogger(filepath.Join(logDir, logFile), 1, 1, time.Millisecond)
 }
 
 func main() {
@@ -104,6 +108,9 @@ func main() {
 	loadFileMetadataAtStart()
 	loadFolderMetadata()
 	workerPool()
+	server := http.Server{
+		Addr: ":8080",
+	}
 	http.HandleFunc("/upload", uploadFileHandler)
 	http.HandleFunc("/download", downloadFileHandler)
 	http.HandleFunc("/fileinfo", fileInfoHandler)
@@ -114,12 +121,34 @@ func main() {
 	http.HandleFunc("/zip", zipFolderHandler)
 	http.HandleFunc("/zipdownload", downloadZipHandler)
 	http.HandleFunc("/zipstatus", zipStatusHandler)
-	fmt.Println("Server is listening in http://localhost:8080")
-	http.ListenAndServe(":8080", nil)
-	Shutdown()
+	logger.Log(log.InfoLevel, logField, "Server is listening in http://localhost:8080")
+	log.Println("Server is listening in http://localhost:8080")
+	go func() {
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		<-sigChan
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			logger.Log(log.FatalLevel, logField, fmt.Sprintf("HTTP shutdown error: %v", err))
+		}
+		logger.Log(log.InfoLevel, logField, "Server is shutting down")
+	}()
+	err := server.ListenAndServe()
+	if err == http.ErrServerClosed {
+		fmt.Println("Server is shutting down")
+		Shutdown()
+	}
 }
 
-func NewBufferedLogger(logFilePath string, maxSize int, maxBackups int, maxAge int, flushInterval time.Duration) *BufferedLogger {
+func Shutdown() {
+	close(taskQueue)
+	wg.Wait()
+	logger.Log(log.InfoLevel, log.Fields{"method": "Shutdown"}, "All task completed, Shutting down...")
+	log.Println("All task completed, shutting down...")
+}
+
+func NewBufferedLogger(logFilePath string, maxSize int, maxAge int, flushInterval time.Duration) *BufferedLogger {
 	lumberjackLogger := &lumberjack.Logger{
 		Filename:   logFilePath,
 		MaxSize:    maxSize,
@@ -129,7 +158,11 @@ func NewBufferedLogger(logFilePath string, maxSize int, maxBackups int, maxAge i
 	}
 	logger := log.New()
 	logger.SetOutput(lumberjackLogger)
-	logger.SetFormatter(&log.JSONFormatter{})
+	logger.SetFormatter(&log.JSONFormatter{
+		CallerPrettyfier: func(f *runtime.Frame) (function string, file string) {
+			return "", fmt.Sprintf("%s:%d", f.File, f.Line)
+		},
+	})
 	logger.SetLevel(log.TraceLevel)
 	bufferedLogger := &BufferedLogger{
 		logChannel:  make(chan LogEntry, logBufferSize),
