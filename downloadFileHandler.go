@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fileServer/config"
+	"fileServer/constants"
 	"fmt"
 	"net/http"
 	"os"
@@ -16,7 +18,7 @@ func downloadFileHandler(w http.ResponseWriter, r *http.Request) {
 		"method": "downloadFileHandler",
 	}
 	logger.Log(log.InfoLevel, logField, "Download handler begins")
-	response := Response{}
+	response := config.Response{}
 	jsonResponse := json.NewEncoder(w)
 	if r.Method != http.MethodGet {
 		http.Error(w, "Invalid HTTP request", http.StatusBadRequest)
@@ -50,7 +52,7 @@ func downloadFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filePath := filepath.Join(uploadDir, folder, fileName)
+	filePath := filepath.Join(constants.UploadDir, folder, fileName)
 	logger.Log(log.DebugLevel, logField, "Acquiring file lock")
 	fileLock := getFileLock(filePath)
 	fileLock.Lock()

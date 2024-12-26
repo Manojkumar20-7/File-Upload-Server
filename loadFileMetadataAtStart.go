@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fileServer/constants"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -15,7 +16,7 @@ func queueLoading(folderPath string) {
 
 func loadWorkerPool() {
 	logger.Log(log.DebugLevel, log.Fields{"method": "loadWorkerPool"}, "Initiating load worker pool")
-	for i := 0; i < loadWorkerCount; i++ {
+	for i := 0; i < constants.LoadWorkerCount; i++ {
 		go loadWorker(i)
 	}
 }
@@ -36,7 +37,7 @@ func loadFileMetadataAtStart() {
 		"method": "loadFileMetadataAtStart",
 	}
 	logger.Log(log.InfoLevel, logField, "LoadFileMetadata file has initiated")
-	err := filepath.WalkDir(uploadDir, func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(constants.UploadDir, func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
 			queueLoading(path)
 			return nil

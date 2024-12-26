@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fileServer/config"
 	"net/http"
 	"time"
 
@@ -13,7 +14,7 @@ func zipStatusHandler(w http.ResponseWriter, r *http.Request) {
 		"method": "zipStatusHandler",
 	}
 	logger.Log(log.InfoLevel, logField, "Zip status handler begins")
-	response := Response{}
+	response := config.Response{}
 	folder := r.URL.Query().Get("folder")
 
 	if folder == "" {

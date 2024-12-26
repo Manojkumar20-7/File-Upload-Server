@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fileServer/config"
+	"fileServer/constants"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,7 +17,7 @@ func downloadZipHandler(w http.ResponseWriter, r *http.Request) {
 		"method": "downloadZipHandler",
 	}
 	logger.Log(log.InfoLevel, logField, "Download zip handler begins")
-	response := Response{}
+	response := config.Response{}
 	jsonResponse := json.NewEncoder(w)
 	folder := r.URL.Query().Get("folder")
 	if folder == "" {
@@ -29,7 +31,7 @@ func downloadZipHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	zipPath := filepath.Join(uploadDir, folder)
+	zipPath := filepath.Join(constants.UploadDir, folder)
 	zipName := zipPath + ".zip"
 	logger.Log(log.DebugLevel, logField, "Checking zip details")
 	_, err := os.Stat(zipName)
@@ -53,7 +55,7 @@ func downloadZipHandler(w http.ResponseWriter, r *http.Request) {
 		response.ResponseTime = time.Now()
 		jsonResponse.Encode(response)
 		return
-	} else if status.(*zipStatus).Status != "completed" {
+	} else if status.(*config.ZipStatus).Status != "completed" {
 		http.Error(w, "Zipping not completed or in progress", http.StatusConflict)
 		response.StatusCode = http.StatusConflict
 		response.Status = "Conflict"
@@ -66,7 +68,7 @@ func downloadZipHandler(w http.ResponseWriter, r *http.Request) {
 		response.Status = "OK"
 		response.Message = "Zipping downloaded"
 		response.ResponseTime = time.Now()
-		zipFilePath := status.(*zipStatus).FilePath
+		zipFilePath := status.(*config.ZipStatus).FilePath
 		http.ServeFile(w, r, zipFilePath)
 		log.Println(response)
 		jsonResponse.Encode(response)

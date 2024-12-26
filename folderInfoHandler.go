@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fileServer/config"
+	"fileServer/constants"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,7 +17,7 @@ func folderInfoHandler(w http.ResponseWriter, r *http.Request) {
 		"method": "folderInfoHandler",
 	}
 	logger.Log(log.InfoLevel, logField, "Folder info handler begins")
-	response := Response{}
+	response := config.Response{}
 	jsonResponse := json.NewEncoder(w)
 	if r.Method != http.MethodGet {
 		http.Error(w, "Invalid HTTP request", http.StatusBadRequest)
@@ -37,7 +39,7 @@ func folderInfoHandler(w http.ResponseWriter, r *http.Request) {
 		jsonResponse.Encode(response)
 		return
 	}
-	folderPath := filepath.Join(uploadDir, folder)
+	folderPath := filepath.Join(constants.UploadDir, folder)
 	_, err := os.Stat(folderPath)
 	if os.IsNotExist(err) {
 		http.Error(w, "Folder not found", http.StatusNotFound)

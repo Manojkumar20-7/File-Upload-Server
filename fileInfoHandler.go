@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fileServer/config"
+	"fileServer/constants"
 	"fmt"
 	"net/http"
 	"os"
@@ -16,7 +18,7 @@ func fileInfoHandler(w http.ResponseWriter, r *http.Request) {
 		"method":"fileInfoHandler",
 	}
 	logger.Log(log.InfoLevel,logField,"FileInfo handler begins")
-	response := Response{}
+	response := config.Response{}
 	jsonResponse := json.NewEncoder(w)
 	if r.Method != http.MethodGet {
 		http.Error(w, "Invalid HTTP request", http.StatusBadRequest)
@@ -51,7 +53,7 @@ func fileInfoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filePath := filepath.Join(uploadDir, folder, fileName)
+	filePath := filepath.Join(constants.UploadDir, folder, fileName)
 	fileInfo, err := os.Stat(filePath)
 	if os.IsNotExist(err) {
 		http.Error(w, "File not found", http.StatusNotFound)

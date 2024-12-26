@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fileServer/config"
+	"fileServer/constants"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -15,12 +17,12 @@ func saveFolderMetadata() {
 	metadataLock.Lock()
 	defer metadataLock.Unlock()
 
-	var folderMetadataList []FolderMetadata
+	var folderMetadataList []config.FolderMetadata
 	folderMetadataMap.Range(func(key, value any) bool {
-		folderMetadataList = append(folderMetadataList, value.(FolderMetadata))
+		folderMetadataList = append(folderMetadataList, value.(config.FolderMetadata))
 		return true
 	})
-	metaDataFile := uploadDir + ".json"
+	metaDataFile := constants.UploadDir + ".json"
 	folder, err := os.Create(metaDataFile)
 	if err != nil {
 		logger.Log(log.ErrorLevel, logField, "Error in openning folder metadata file")

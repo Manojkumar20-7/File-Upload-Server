@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fileServer/config"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -16,10 +17,10 @@ func saveFileMetadata(folderPath string) {
 	logger.Log(logrus.DebugLevel, logField, "Acquiring lock for map")
 	defer metadataLock.Unlock()
 
-	var metadataList []FileMetadata
+	var metadataList []config.FileMetadata
 	metaDataMap.Range(func(key, value any) bool {
-		if value.(FileMetadata).FolderPath == folderPath {
-			metadataList = append(metadataList, value.(FileMetadata))
+		if value.(config.FileMetadata).FolderPath == folderPath {
+			metadataList = append(metadataList, value.(config.FileMetadata))
 		}
 		return true
 	})
