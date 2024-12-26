@@ -2,6 +2,8 @@ package main
 
 import (
 	"archive/zip"
+	"fileServer/config"
+	"fileServer/constants"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,14 +17,14 @@ func zipFolderInBackground(folder string) {
 		"method": "zipFolderInBackground",
 	}
 	logger.Log(log.InfoLevel, logField, "Background zip begins")
-	status := &zipStatus{
+	status := &config.ZipStatus{
 		Status:    "in_progress",
 		StartTime: time.Now(),
 	}
 	zipStatuses.Store(folder, status)
 
 	zipName := folder + ".zip"
-	zipPath := filepath.Join(uploadDir, zipName)
+	zipPath := filepath.Join(constants.UploadDir, zipName)
 
 	zipFile, err := os.Create(zipPath)
 	if err != nil {
@@ -37,7 +39,7 @@ func zipFolderInBackground(folder string) {
 	zipWriter := zip.NewWriter(zipFile)
 	defer zipWriter.Close()
 
-	folderPath := filepath.Join(uploadDir, folder)
+	folderPath := filepath.Join(constants.UploadDir, folder)
 	logger.Log(log.TraceLevel, logField, "Copying content for zipping")
 	err = filepath.Walk(folderPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {

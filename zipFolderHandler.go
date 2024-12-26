@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fileServer/config"
+	"fileServer/constants"
 	"fmt"
 	"net/http"
 	"time"
@@ -17,7 +19,7 @@ func queueZipping(folder string) {
 
 func workerPool() {
 	logger.Log(log.InfoLevel, log.Fields{"method": "worker"}, "Initiating zipping worker pool")
-	for i := 0; i < workerCount; i++ {
+	for i := 0; i < constants.WorkerCount; i++ {
 		go worker(i)
 	}
 }
@@ -37,7 +39,7 @@ func zipFolderHandler(w http.ResponseWriter, r *http.Request) {
 		"method": "zipFolderHandler",
 	}
 	logger.Log(log.InfoLevel, logField, "Zip folder handler begins")
-	response := Response{}
+	response := config.Response{}
 	jsonResponse := json.NewEncoder(w)
 	folder := r.URL.Query().Get("folder")
 	if folder == "" {

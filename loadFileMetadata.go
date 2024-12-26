@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fileServer/config"
 	"fmt"
 	"io"
 	"os"
@@ -22,7 +23,7 @@ func loadFileMetadata(folderPath string) {
 	}
 	defer file.Close()
 
-	var metadataList []FileMetadata
+	var metadataList []config.FileMetadata
 	if err := json.NewDecoder(file).Decode(&metadataList); err != nil && err != io.EOF {
 		logger.Log(log.FatalLevel,logField,"Failed to decode the metadata")
 	}

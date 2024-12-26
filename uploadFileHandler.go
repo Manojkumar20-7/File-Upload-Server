@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fileServer/config"
+	"fileServer/constants"
 	"io"
 	"io/fs"
 	"net/http"
@@ -15,8 +17,8 @@ import (
 func getCurrentTime(folderPath string) string {
 	var result string
 	folderMetadataMap.Range(func(key, value any) bool {
-		if folderPath == key && value.(FolderMetadata).CreatedTime != "" {
-			result = value.(FolderMetadata).CreatedTime
+		if folderPath == key && value.(config.FolderMetadata).CreatedTime != "" {
+			result = value.(config.FolderMetadata).CreatedTime
 		}
 		return true
 	})
@@ -43,7 +45,7 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		"method": "uploadFileHandler",
 	}
 	logger.Log(log.InfoLevel, logField, "Upload handler begins")
-	response := Response{}
+	response := config.Response{}
 	jsonResponse := json.NewEncoder(w)
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid HTTP method", http.StatusBadRequest)
@@ -98,7 +100,7 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		jsonResponse.Encode(response)
 		return
 	}
-	folderPath := filepath.Join(uploadDir, folder)
+	folderPath := filepath.Join(constants.UploadDir, folder)
 
 	logger.Log(log.DebugLevel, logField, "Acquiring folder lock at upload handler")
 	folderLock := getFileLock(folderPath)
@@ -143,7 +145,7 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 
 	fileInfo, _ := os.Stat(filePath)
 
-	metadata := FileMetadata{
+	metadata := config.FileMetadata{
 		FileName:     fileName,
 		FilePath:     filePath,
 		FolderPath:   folderPath,
@@ -166,7 +168,7 @@ func uploadFileHandler(w http.ResponseWriter, r *http.Request) {
 		jsonResponse.Encode(response)
 		return
 	}
-	folderMetadata := FolderMetadata{}
+	folderMetadata := config.FolderMetadata{}
 	folderMetadata.FolderName = folderInfo.Name()
 	folderMetadata.FolderPath = folderPath
 	folderMetadata.FolderSize = folderInfo.Size()

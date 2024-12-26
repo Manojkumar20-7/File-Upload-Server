@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fileServer/config"
+	"fileServer/constants"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,7 +17,7 @@ func folderCreateHandler(w http.ResponseWriter, r *http.Request) {
 		"method": "folderCreateHandler",
 	}
 	logger.Log(log.InfoLevel, logField, "Folder create handler begin")
-	response := Response{}
+	response := config.Response{}
 	jsonResponse := json.NewEncoder(w)
 	folder := r.URL.Query().Get("folder")
 	if folder == "" {
@@ -27,7 +29,7 @@ func folderCreateHandler(w http.ResponseWriter, r *http.Request) {
 		jsonResponse.Encode(response)
 		return
 	}
-	folderPath := filepath.Join(uploadDir, folder)
+	folderPath := filepath.Join(constants.UploadDir, folder)
 	_, err := os.Stat(folderPath)
 	if os.IsNotExist(err) {
 		logger.Log(log.TraceLevel, logField, "Creating folder")
@@ -47,7 +49,7 @@ func folderCreateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	logger.Log(log.DebugLevel, logField, "Updating folder metadata")
 	folderInfo, _ := os.Stat(folderPath)
-	folderMetadata := FolderMetadata{}
+	folderMetadata := config.FolderMetadata{}
 	folderMetadata.FolderName = folderInfo.Name()
 	folderMetadata.FolderPath = folderPath
 	folderMetadata.FolderSize = folderInfo.Size()

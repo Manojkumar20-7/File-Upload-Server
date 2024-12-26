@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fileServer/config"
+	"fileServer/constants"
 	"fmt"
 	"io"
 	"os"
@@ -14,7 +16,7 @@ func loadFolderMetadata() {
 		"method": "loadFolderMetadata",
 	}
 	logger.Log(log.InfoLevel, logField, "Loading Folder metadata starts")
-	metadataFile := uploadDir + ".json"
+	metadataFile := constants.UploadDir + ".json"
 	folder, err := os.Open(metadataFile)
 	if err != nil {
 		logger.Log(log.FatalLevel, logField, "Error in opening metadata file")
@@ -22,7 +24,7 @@ func loadFolderMetadata() {
 	}
 	defer folder.Close()
 
-	var metadataList []FolderMetadata
+	var metadataList []config.FolderMetadata
 	if err := json.NewDecoder(folder).Decode(&metadataList); err != nil && err != io.EOF {
 		logger.Log(log.FatalLevel, logField, "Failed to decode the metadata")
 	}
