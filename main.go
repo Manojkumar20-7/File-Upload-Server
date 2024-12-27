@@ -47,12 +47,6 @@ func init() {
 }
 
 func main() {
-
-	reg := prometheus.NewRegistry()
-	metrics = prom.NewMetrics(reg)
-	getAllMetrics()
-	promHandler := promhttp.HandlerFor(reg, promhttp.HandlerOpts{})
-
 	logField := logrus.Fields{
 		"method": "main",
 	}
@@ -63,10 +57,14 @@ func main() {
 	loadFolderMetadata()
 	workerPool()
 
+	reg := prometheus.NewRegistry()
+	metrics = prom.NewMetrics(reg)
+	getAllMetrics()
+	promHandler := promhttp.HandlerFor(reg, promhttp.HandlerOpts{})
 	server := http.Server{
 		Addr: ":8080",
 	}
-	http.Handle("/metrics",promHandler)
+	http.Handle("/metrics", promHandler)
 	http.HandleFunc("/upload", uploadFileHandler)
 	http.HandleFunc("/download", downloadFileHandler)
 	http.HandleFunc("/fileinfo", fileInfoHandler)
@@ -105,12 +103,13 @@ func Shutdown() {
 }
 
 func getAllMetrics() {
-	folder, err := os.Open("./uploads.json")
-	if err != nil {
-		panic(err)
-	}
+	folder, _ := os.Open("./uploads.json")
+	// if err != nil || os.IsNotExist(err) {
+	// 	panic(err)
+	// }
+	defer folder.Close()
 	var folderData []config.FolderMetadata
-	err = json.NewDecoder(folder).Decode(&folderData)
+	err := json.NewDecoder(folder).Decode(&folderData)
 	if err != nil {
 		panic(err)
 	}

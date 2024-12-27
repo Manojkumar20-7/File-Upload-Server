@@ -16,10 +16,10 @@ import (
 
 func downloadZipHandler(w http.ResponseWriter, r *http.Request) {
 	metrics.ActiveRequest.Inc()
-	now:=time.Now()
+	now := time.Now()
 	metrics.RequestCount.With(prometheus.Labels{
-		"path":r.URL.Path,
-		"method":r.Method,
+		"path":   r.URL.Path,
+		"method": r.Method,
 	}).Inc()
 	logField := log.Fields{
 		"method": "downloadZipHandler",
@@ -36,6 +36,10 @@ func downloadZipHandler(w http.ResponseWriter, r *http.Request) {
 		response.Message = "Folder not specified"
 		response.ResponseTime = time.Now()
 		jsonResponse.Encode(response)
+		time.Sleep(time.Second * time.Duration(rand.Intn(15)))
+		metrics.ResponseTime.Observe(float64(time.Since(now).Seconds()))
+		metrics.RequestTime.With(prometheus.Labels{"path": r.URL.Path}).Observe(float64(time.Since(now)))
+		metrics.ActiveRequest.Dec()
 		return
 	}
 
@@ -50,6 +54,10 @@ func downloadZipHandler(w http.ResponseWriter, r *http.Request) {
 		response.ResponseTime = time.Now()
 		jsonResponse.Encode(response)
 		http.ServeFile(w, r, zipName)
+		time.Sleep(time.Second * time.Duration(rand.Intn(15)))
+		metrics.ResponseTime.Observe(float64(time.Since(now).Seconds()))
+		metrics.RequestTime.With(prometheus.Labels{"path": r.URL.Path}).Observe(float64(time.Since(now)))
+		metrics.ActiveRequest.Dec()
 		return
 	}
 
@@ -62,6 +70,10 @@ func downloadZipHandler(w http.ResponseWriter, r *http.Request) {
 		response.Message = "No zipping found for the specified folder"
 		response.ResponseTime = time.Now()
 		jsonResponse.Encode(response)
+		time.Sleep(time.Second * time.Duration(rand.Intn(15)))
+		metrics.ResponseTime.Observe(float64(time.Since(now).Seconds()))
+		metrics.RequestTime.With(prometheus.Labels{"path": r.URL.Path}).Observe(float64(time.Since(now)))
+		metrics.ActiveRequest.Dec()
 		return
 	} else if status.(*config.ZipStatus).Status != "completed" {
 		http.Error(w, "Zipping not completed or in progress", http.StatusConflict)
@@ -70,6 +82,10 @@ func downloadZipHandler(w http.ResponseWriter, r *http.Request) {
 		response.Message = "Zipping not completed or in progress"
 		response.ResponseTime = time.Now()
 		jsonResponse.Encode(response)
+		time.Sleep(time.Second * time.Duration(rand.Intn(15)))
+		metrics.ResponseTime.Observe(float64(time.Since(now).Seconds()))
+		metrics.RequestTime.With(prometheus.Labels{"path": r.URL.Path}).Observe(float64(time.Since(now)))
+		metrics.ActiveRequest.Dec()
 		return
 	} else {
 		response.StatusCode = http.StatusOK
@@ -83,8 +99,8 @@ func downloadZipHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	go getAllMetrics()
 	logger.Log(log.InfoLevel, logField, "Exits Zip  download handler")
-	time.Sleep(time.Second*time.Duration(rand.Intn(15)))
+	time.Sleep(time.Second * time.Duration(rand.Intn(15)))
 	metrics.ResponseTime.Observe(float64(time.Since(now).Seconds()))
-	metrics.RequestTime.With(prometheus.Labels{"path":r.URL.Path}).Observe(float64(time.Since(now)))
+	metrics.RequestTime.With(prometheus.Labels{"path": r.URL.Path}).Observe(float64(time.Since(now)))
 	metrics.ActiveRequest.Dec()
 }
