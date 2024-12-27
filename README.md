@@ -28,7 +28,8 @@ go mod tidy
 ```
 ### Run the server
 ```bash
-go run *.go
+go build
+./fileServer
 ```
 
 
