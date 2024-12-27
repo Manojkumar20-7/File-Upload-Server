@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fileServer/config"
+	"fileServer/constants"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,10 +17,10 @@ func deleteFolderHandler(w http.ResponseWriter, r *http.Request) {
 		"method": "deleteFolderHandler",
 	}
 	logger.Log(log.InfoLevel, logField, "Delete folder handler begins")
-	response := Response{}
+	response := config.Response{}
 	jsonResponse := json.NewEncoder(w)
 	folder := r.URL.Query().Get("folder")
-	folderPath := filepath.Join(uploadDir, folder)
+	folderPath := filepath.Join(constants.UploadDir, folder)
 	if _, err := os.Stat(folderPath); os.IsNotExist(err) {
 		logger.Log(log.DebugLevel, logField, "Folder not found and updating folder metadata")
 		folderMetadataMap.Delete(folderPath)

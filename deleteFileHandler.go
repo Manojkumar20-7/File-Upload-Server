@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fileServer/config"
+	"fileServer/constants"
 	"fmt"
 	"net/http"
 	"os"
@@ -16,7 +18,7 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 		"method": "deleteFileHandler",
 	}
 	logger.Log(log.InfoLevel, logField, "Delete file handler begins")
-	response := Response{}
+	response := config.Response{}
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Invalid HTTP request", http.StatusBadRequest)
 		response.StatusCode = http.StatusBadRequest
@@ -38,7 +40,7 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	folderPath := filepath.Join(uploadDir, folder)
+	folderPath := filepath.Join(constants.UploadDir, folder)
 	if _, err := os.Stat(folderPath); os.IsNotExist(err) {
 		response.StatusCode = http.StatusOK
 		response.Status = "OK"
@@ -154,7 +156,7 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil || os.IsNotExist(err) {
 		return
 	}
-	folderMetadata := FolderMetadata{}
+	folderMetadata := config.FolderMetadata{}
 	folderMetadata.FolderName = folderInfo.Name()
 	folderMetadata.FolderPath = folderPath
 	folderMetadata.FolderSize = folderInfo.Size()
