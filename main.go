@@ -103,13 +103,13 @@ func Shutdown() {
 }
 
 func getAllMetrics() {
-	folder, _ := os.Open("./uploads.json")
-	// if err != nil || os.IsNotExist(err) {
-	// 	panic(err)
-	// }
+	folder, err := os.Open("./uploads.json")
+	if err != nil || os.IsNotExist(err) {
+		panic(err)
+	}
 	defer folder.Close()
 	var folderData []config.FolderMetadata
-	err := json.NewDecoder(folder).Decode(&folderData)
+	err = json.NewDecoder(folder).Decode(&folderData)
 	if err != nil {
 		panic(err)
 	}
