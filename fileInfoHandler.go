@@ -5,15 +5,23 @@ import (
 	"fileServer/config"
 	"fileServer/constants"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
 func fileInfoHandler(w http.ResponseWriter, r *http.Request) {
+	metrics.ActiveRequest.Inc()
+	now:=time.Now();
+	metrics.RequestCount.With(prometheus.Labels{
+		"path":r.URL.Path,
+		"method":r.Method,
+	}).Inc()
 	logField:=log.Fields{
 		"method":"fileInfoHandler",
 	}
@@ -75,6 +83,7 @@ func fileInfoHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 		return
 	}
+	go getAllMetrics()
 	response.StatusCode = http.StatusOK
 	response.Status = "OK"
 	response.Message = "File info retrieved successfully"
@@ -84,4 +93,8 @@ func fileInfoHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", fileInfo.Size()))
 	w.Header().Set("Last-Modified", fileInfo.ModTime().Format(http.TimeFormat))
 	logger.Log(log.InfoLevel,logField,"Completing fileinfo handler and exits")
+	time.Sleep(time.Second*time.Duration(rand.Intn(15)))
+	metrics.ResponseTime.Observe(float64(time.Since(now).Seconds()))
+	metrics.RequestTime.With(prometheus.Labels{"path":r.URL.Path}).Observe(float64(time.Since(now)))
+	metrics.ActiveRequest.Dec()
 }

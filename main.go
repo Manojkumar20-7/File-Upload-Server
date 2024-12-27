@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fileServer/config"
 	"fileServer/constants"
 	"fmt"
 	"net/http"
@@ -14,6 +16,10 @@ import (
 
 	log "fileServer/logger"
 
+	prom "fileServer/prometheus"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
@@ -28,6 +34,7 @@ var (
 	loadwg            sync.WaitGroup
 	zipStatuses       sync.Map
 	logger            *log.BufferedLogger
+	metrics           *prom.Metrics
 )
 
 func init() {
@@ -40,17 +47,26 @@ func init() {
 }
 
 func main() {
+
+	reg := prometheus.NewRegistry()
+	metrics = prom.NewMetrics(reg)
+	getAllMetrics()
+	promHandler := promhttp.HandlerFor(reg, promhttp.HandlerOpts{})
+
 	logField := logrus.Fields{
 		"method": "main",
 	}
 	logger.Log(logrus.InfoLevel, logField, "Application starts...")
+
 	loadWorkerPool()
 	loadFileMetadataAtStart()
 	loadFolderMetadata()
 	workerPool()
+
 	server := http.Server{
 		Addr: ":8080",
 	}
+	http.Handle("/metrics",promHandler)
 	http.HandleFunc("/upload", uploadFileHandler)
 	http.HandleFunc("/download", downloadFileHandler)
 	http.HandleFunc("/fileinfo", fileInfoHandler)
@@ -86,4 +102,21 @@ func Shutdown() {
 	wg.Wait()
 	logger.Log(logrus.InfoLevel, logrus.Fields{"method": "Shutdown"}, "All task completed, Shutting down...")
 	logrus.Println("All task completed, shutting down...")
+}
+
+func getAllMetrics() {
+	folder, err := os.Open("./uploads.json")
+	if err != nil {
+		panic(err)
+	}
+	var folderData []config.FolderMetadata
+	err = json.NewDecoder(folder).Decode(&folderData)
+	if err != nil {
+		panic(err)
+	}
+	folderCount := float64(len(folderData))
+	metrics.FolderCount.Set(folderCount)
+	for _, element := range folderData {
+		metrics.FileCount.With(prometheus.Labels{"folder": element.FolderName}).Set(float64(element.FilesCount))
+	}
 }

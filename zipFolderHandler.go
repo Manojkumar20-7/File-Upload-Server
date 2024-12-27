@@ -5,9 +5,11 @@ import (
 	"fileServer/config"
 	"fileServer/constants"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -35,6 +37,12 @@ func worker(workerID int) {
 }
 
 func zipFolderHandler(w http.ResponseWriter, r *http.Request) {
+	now:=time.Now()
+	metrics.ActiveRequest.Inc()
+	metrics.RequestCount.With(prometheus.Labels{
+		"path":r.URL.Path,
+		"method":r.Method,
+	}).Inc()
 	logField := log.Fields{
 		"method": "zipFolderHandler",
 	}
@@ -51,6 +59,7 @@ func zipFolderHandler(w http.ResponseWriter, r *http.Request) {
 		jsonResponse.Encode(response)
 		return
 	}
+	go getAllMetrics()
 	logger.Log(log.DebugLevel, logField, "Initiates zipping folder")
 	queueZipping(folder)
 	logger.Log(log.TraceLevel, logField, fmt.Sprintf("Zipping process started for fodler %s", folder))
@@ -60,4 +69,8 @@ func zipFolderHandler(w http.ResponseWriter, r *http.Request) {
 	response.ResponseTime = time.Now()
 	jsonResponse.Encode(response)
 	logger.Log(log.InfoLevel, logField, "Zip folder handler exits")
+	time.Sleep(time.Second*time.Duration(rand.Intn(15)))
+	metrics.ResponseTime.Observe(float64(time.Since(now).Seconds()))
+	metrics.RequestTime.With(prometheus.Labels{"path":r.URL.Path}).Observe(float64(time.Since(now)))
+	metrics.ActiveRequest.Dec()
 }

@@ -3,13 +3,21 @@ package main
 import (
 	"encoding/json"
 	"fileServer/config"
+	"math/rand"
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
 func zipStatusHandler(w http.ResponseWriter, r *http.Request) {
+	metrics.ActiveRequest.Inc()
+	now:=time.Now()
+	metrics.RequestCount.With(prometheus.Labels{
+		"path":r.URL.Path,
+		"method":r.Method,
+	}).Inc()
 	logField := log.Fields{
 		"method": "zipStatusHandler",
 	}
@@ -45,4 +53,8 @@ func zipStatusHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 	json.NewEncoder(w).Encode(status)
 	logger.Log(log.InfoLevel, logField, "Exits zip status handler")
+	time.Sleep(time.Second*time.Duration(rand.Intn(15)))
+	metrics.ResponseTime.Observe(float64(time.Since(now).Seconds()))
+	metrics.RequestTime.With(prometheus.Labels{"path":r.URL.Path}).Observe(float64(time.Since(now)))
+	metrics.ActiveRequest.Dec()
 }

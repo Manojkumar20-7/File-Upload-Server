@@ -4,15 +4,23 @@ import (
 	"encoding/json"
 	"fileServer/config"
 	"fileServer/constants"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
 func downloadZipHandler(w http.ResponseWriter, r *http.Request) {
+	metrics.ActiveRequest.Inc()
+	now:=time.Now()
+	metrics.RequestCount.With(prometheus.Labels{
+		"path":r.URL.Path,
+		"method":r.Method,
+	}).Inc()
 	logField := log.Fields{
 		"method": "downloadZipHandler",
 	}
@@ -73,5 +81,10 @@ func downloadZipHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(response)
 		jsonResponse.Encode(response)
 	}
+	go getAllMetrics()
 	logger.Log(log.InfoLevel, logField, "Exits Zip  download handler")
+	time.Sleep(time.Second*time.Duration(rand.Intn(15)))
+	metrics.ResponseTime.Observe(float64(time.Since(now).Seconds()))
+	metrics.RequestTime.With(prometheus.Labels{"path":r.URL.Path}).Observe(float64(time.Since(now)))
+	metrics.ActiveRequest.Dec()
 }

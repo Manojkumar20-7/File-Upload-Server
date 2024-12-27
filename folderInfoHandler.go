@@ -4,15 +4,23 @@ import (
 	"encoding/json"
 	"fileServer/config"
 	"fileServer/constants"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
 func folderInfoHandler(w http.ResponseWriter, r *http.Request) {
+	metrics.ActiveRequest.Inc()
+	now:=time.Now()
+	metrics.RequestCount.With(prometheus.Labels{
+		"path":r.URL.Path,
+		"method":r.Method,
+	}).Inc()
 	logField := log.Fields{
 		"method": "folderInfoHandler",
 	}
@@ -66,6 +74,7 @@ func folderInfoHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		return true
 	})
+	go getAllMetrics()
 	response.StatusCode = http.StatusOK
 	response.Status = "OK"
 	response.Message = "Folder info retrieved successfully"
@@ -73,4 +82,8 @@ func folderInfoHandler(w http.ResponseWriter, r *http.Request) {
 	jsonResponse.Encode(response)
 	json.NewEncoder(w).Encode(result)
 	logger.Log(log.InfoLevel, logField, "Folder info handler exits")
+	time.Sleep(time.Second*time.Duration(rand.Intn(15)))
+	metrics.ResponseTime.Observe(float64(time.Since(now).Seconds()))
+	metrics.RequestTime.With(prometheus.Labels{"path":r.URL.Path}).Observe(float64(time.Since(now)))
+	metrics.ActiveRequest.Dec()
 }

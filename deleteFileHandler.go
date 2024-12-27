@@ -5,15 +5,23 @@ import (
 	"fileServer/config"
 	"fileServer/constants"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 )
 
 func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
+	metrics.ActiveRequest.Inc()
+	now:=time.Now()
+	metrics.RequestCount.With(prometheus.Labels{
+		"path":r.URL.Path,
+		"method":r.Method,
+	}).Inc()
 	logField := log.Fields{
 		"method": "deleteFileHandler",
 	}
@@ -168,5 +176,10 @@ func deleteFileHandler(w http.ResponseWriter, r *http.Request) {
 	folderMetadata.IsDirectory = folderInfo.IsDir()
 	folderMetadataMap.Store(folderPath, folderMetadata)
 	saveFolderMetadata()
+	go getAllMetrics();
+	time.Sleep(time.Second*time.Duration(rand.Intn(15)))
 	logger.Log(log.InfoLevel, logField, "Delete file handler completed and exits")
+	metrics.ResponseTime.Observe(float64(time.Since(now).Seconds()))
+	metrics.RequestTime.With(prometheus.Labels{"path":r.URL.Path}).Observe(float64(time.Since(now)))
+	metrics.ActiveRequest.Dec()
 }
