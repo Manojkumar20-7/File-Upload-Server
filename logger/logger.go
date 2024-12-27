@@ -1,11 +1,11 @@
 package logger
 
 import (
+	"fileServer/constants"
 	"fmt"
 	"runtime"
 	"sync"
 	"time"
-	"fileServer/constants"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
