@@ -4,6 +4,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+var namespace string = "File_Server"
+
 type Metrics struct {
 	FolderCount   prometheus.Gauge
 	FileCount     prometheus.GaugeVec
@@ -16,7 +18,7 @@ type Metrics struct {
 func NewMetrics(reg prometheus.Registerer) *Metrics {
 	m := &Metrics{
 		FolderCount: prometheus.NewGauge(prometheus.GaugeOpts{
-			Namespace: "File_Server",
+			Namespace: namespace,
 			Name:      "Folder_Count",
 			Help:      "Number of folders in file server",
 		}),
