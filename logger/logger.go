@@ -17,6 +17,7 @@ type BufferedLogger struct {
 	Done        chan bool
 	Wg          sync.WaitGroup
 	Logger      *log.Logger
+	IsDebugMode bool
 }
 
 type LogEntry struct {
@@ -46,6 +47,7 @@ func NewBufferedLogger(logFilePath string, maxSize int, maxAge int, flushInterva
 		FlushTicker: time.NewTicker(flushInterval),
 		Done:        make(chan bool),
 		Logger:      logger,
+		IsDebugMode: false,
 	}
 	bufferedLogger.Wg.Add(1)
 	go bufferedLogger.startFlushTicker()
@@ -75,9 +77,13 @@ func (bl *BufferedLogger) FlushLogs() {
 		case LogEntry := <-bl.LogChannel:
 			switch LogEntry.LogLevel {
 			case log.TraceLevel:
-				bl.Logger.WithFields(LogEntry.LogField).Trace(LogEntry.Message)
+				if bl.IsDebugMode {
+					bl.Logger.WithFields(LogEntry.LogField).Trace(LogEntry.Message)
+				}
 			case log.DebugLevel:
-				bl.Logger.WithFields(LogEntry.LogField).Debug(LogEntry.Message)
+				if bl.IsDebugMode {
+					bl.Logger.WithFields(LogEntry.LogField).Debug(LogEntry.Message)
+				}
 			case log.InfoLevel:
 				bl.Logger.WithFields(LogEntry.LogField).Info(LogEntry.Message)
 			case log.WarnLevel:
