@@ -1,0 +1,27 @@
+version: 2
+
+linters:
+  
+  enable:
+    - errcheck
+    - staticcheck
+    - ineffassign
+    - govet
+    - gosec
+    - exptostd
+    - sqlclosecheck
+    - gocritic
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+run:
+  timeout: 1m
+  tests: true
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 3
