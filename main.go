@@ -5,9 +5,11 @@ import (
 	"fileServer/constants"
 	"fmt"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"syscall"
 	"time"
@@ -35,16 +37,18 @@ func init() {
 	if os.IsNotExist(err) {
 		os.Mkdir(constants.UploadDir, os.ModePerm)
 	}
-	_,err=os.Stat(constants.UploadDir+".json")
-	if os.IsNotExist(err){
-		os.Create(constants.UploadDir+".json")
-		err:=os.WriteFile(constants.UploadDir+".json",[]byte("[]"),os.ModePerm)
-		if err!=nil{
+	_, err = os.Stat(constants.UploadDir + ".json")
+	if os.IsNotExist(err) {
+		os.Create(constants.UploadDir + ".json")
+		err := os.WriteFile(constants.UploadDir+".json", []byte("[]"), os.ModePerm)
+		if err != nil {
 			panic(err)
 		}
 	}
 
 	logger = log.NewBufferedLogger(filepath.Join(constants.LogDir, constants.LogFile), 1, 1, time.Millisecond)
+	runtime.SetMutexProfileFraction(1)
+	runtime.SetBlockProfileRate(1)
 }
 
 func main() {
